@@ -3,11 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/simp7/gwc/counter"
 	"io"
 	"os"
-	"strconv"
-	"strings"
+
+	"github.com/simp7/gwc/counter"
 )
 
 type Counter interface {
@@ -20,19 +19,14 @@ func processAll(files []string, counters ...Counter) {
 		return
 	}
 
-	for _, file := range files {
-		process(file, counters...)
+	for _, fileName := range files {
+		file, err := os.OpenFile(fileName, os.O_RDONLY, os.ModePerm)
+		if err != nil {
+			fmt.Println("file " + fileName + " is not valid")
+			return
+		}
+		processReader(file, fileName, counters...)
 	}
-}
-
-func process(fileName string, counters ...Counter) {
-	file, err := os.OpenFile(fileName, os.O_RDONLY, os.ModePerm)
-	if err != nil {
-		fmt.Println("file " + fileName + " is not valid")
-		return
-	}
-
-	processReader(file, fileName, counters...)
 }
 
 func processReader(r io.Reader, explain string, counters ...Counter) {
@@ -41,14 +35,13 @@ func processReader(r io.Reader, explain string, counters ...Counter) {
 		fmt.Println(err)
 	}
 
-	result := make([]string, 0)
-
+	result := ""
 	for _, c := range counters {
-		result = append(result, strconv.Itoa(c.Count(text)))
+		countResult := fmt.Sprintf("%8d", c.Count(text))
+		result += countResult
 	}
-	result = append(result, explain)
 
-	fmt.Println(strings.Join(result, "\t"))
+	fmt.Println(result, explain)
 }
 
 func main() {
@@ -69,5 +62,4 @@ func main() {
 	} else {
 		processAll(os.Args[1:], counter.Line(), counter.Word(), counter.Byte())
 	}
-
 }
