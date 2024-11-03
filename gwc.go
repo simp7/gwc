@@ -64,10 +64,12 @@ func formatCounts(counts []int) string {
 }
 
 func main() {
+	charMode := ""
 	isLine := flag.Bool("l", false, "get number of lines")
 	isWord := flag.Bool("w", false, "get number of words")
-	isByte := flag.Bool("c", false, "get number of bytes")
-	isChar := flag.Bool("m", false, "get number of characters")
+	flag.BoolFunc("c", "get number of bytes", func(string) error { charMode = "c"; return nil })
+	flag.BoolFunc("m", "get number of characters", func(string) error { charMode = "m"; return nil })
+
 	flag.Parse()
 	counters := make([]Counter, 0)
 
@@ -79,10 +81,11 @@ func main() {
 		counters = append(counters, counter.Word())
 	}
 
-	if *isChar {
-		counters = append(counters, counter.Character())
-	} else if *isByte {
+	switch charMode {
+	case "c":
 		counters = append(counters, counter.Byte())
+	case "m":
+		counters = append(counters, counter.Character())
 	}
 
 	if len(counters) == 0 {
