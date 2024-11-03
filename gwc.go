@@ -45,21 +45,30 @@ func processReader(r io.Reader, explain string, counters ...Counter) {
 }
 
 func main() {
-	isByte := flag.Bool("c", false, "get number of bytes")
 	isLine := flag.Bool("l", false, "get number of lines")
 	isWord := flag.Bool("w", false, "get number of words")
+	isByte := flag.Bool("c", false, "get number of bytes")
 	isChar := flag.Bool("m", false, "get number of characters")
 	flag.Parse()
+	counters := make([]Counter, 0)
 
-	if *isByte {
-		processAll(os.Args[2:], counter.Byte())
-	} else if *isLine {
-		processAll(os.Args[2:], counter.Line())
-	} else if *isWord {
-		processAll(os.Args[2:], counter.Word())
-	} else if *isChar {
-		processAll(os.Args[2:], counter.Character())
+	if *isLine {
+		counters = append(counters, counter.Line())
+	}
+
+	if *isWord {
+		counters = append(counters, counter.Word())
+	}
+
+	if *isChar {
+		counters = append(counters, counter.Character())
+	} else if *isByte {
+		counters = append(counters, counter.Byte())
+	}
+
+	if len(counters) == 0 {
+		processAll(flag.Args(), counter.Line(), counter.Word(), counter.Byte())
 	} else {
-		processAll(os.Args[1:], counter.Line(), counter.Word(), counter.Byte())
+		processAll(flag.Args(), counters...)
 	}
 }
