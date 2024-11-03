@@ -15,9 +15,12 @@ type Counter interface {
 
 func processAll(files []string, counters ...Counter) {
 	if len(files) == 0 {
-		processReader(os.Stdin, "", counters...)
+		counts := process(os.Stdin, counters...)
+		fmt.Println(formatCounts(counts))
 		return
 	}
+
+	total := make([]int, len(counters))
 
 	for _, fileName := range files {
 		file, err := os.OpenFile(fileName, os.O_RDONLY, os.ModePerm)
@@ -25,23 +28,39 @@ func processAll(files []string, counters ...Counter) {
 			fmt.Println("file " + fileName + " is not valid")
 			return
 		}
-		processReader(file, fileName, counters...)
+
+		counts := process(file, counters...)
+		for i := range total {
+			total[i] += counts[i]
+		}
+		fmt.Println(formatCounts(counts), fileName)
+	}
+
+	if len(files) > 1 {
+		fmt.Println(formatCounts(total), "total")
 	}
 }
 
-func processReader(r io.Reader, explain string, counters ...Counter) {
+func process(r io.Reader, counters ...Counter) []int {
 	text, err := io.ReadAll(r)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	result := ""
-	for _, c := range counters {
-		countResult := fmt.Sprintf("%8d", c.Count(text))
-		result += countResult
+	result := make([]int, len(counters))
+	for i, c := range counters {
+		result[i] = c.Count(text)
 	}
 
-	fmt.Println(result, explain)
+	return result
+}
+
+func formatCounts(counts []int) string {
+	output := ""
+	for _, count := range counts {
+		output += fmt.Sprintf("%8d", count)
+	}
+	return output
 }
 
 func main() {
